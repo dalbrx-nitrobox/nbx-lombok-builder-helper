@@ -1,10 +1,10 @@
 plugins {
     id("java")
-    id("org.jetbrains.intellij") version "1.9.0"
+    id("org.jetbrains.intellij") version "1.16.0"
 }
 
-group = "com.dguner.lombokbuilderhelper"
-version = "1.5.0"
+group = "com.nitrobox.lombokbuilderhelper"
+version = "1.0.4"
 
 repositories {
     mavenCentral()
@@ -15,20 +15,20 @@ dependencies {
 }
 
 intellij {
-    version.set("2022.2")
+    version.set("2023.2")
     plugins.set(listOf("com.intellij.java"))
 }
 
 tasks {
     // Set the JVM compatibility versions
     withType<JavaCompile> {
-        sourceCompatibility = "11"
-        targetCompatibility = "11"
+        sourceCompatibility = "17"
+        targetCompatibility = "17"
     }
 
     patchPluginXml {
         version.set("${project.version}")
-        sinceBuild.set("203")
+        sinceBuild.set("232")
         untilBuild.set("")
     }
 }

@@ -1,14 +1,20 @@
 <idea-plugin>
-  <id>com.dguner.lombok-builder-helper</id>
-  <name>Lombok Builder Helper</name>
-  <vendor url="https://github.com/dorukguner/lombok-builder-helper">dguner</vendor>
+  <id>com.nitrobox.lombok-builder-helper</id>
+  <name>Nitrobox Lombok Builder Helper</name>
+  <vendor url="https://github.com/nitrobox/lombok-builder-helper">nitrobox</vendor>
 
   <description><![CDATA[
 <p>
     Displays an error when non-null fields are not set when calling a Lombok <b>@Builder</b>
 </p>
 <p>
+    Displays an warning when not all fields are set when calling a Lombok <b>@Builder</b>
+</p>
+<p>
     Quick-fix adds all non-null fields to the builder call
+</p>
+<p>
+    Quick-fix adds all fields to the builder call
 </p>
     ]]></description>
 
@@ -16,6 +22,7 @@
   <h2>Improvements</h2>
   <ul>
   <li>Now treats primitive typed fields as non nullable</li>
+  <li>Quick-fix which adds all fields to the builder call</li>
   </ul>
   ]]></change-notes>
 
@@ -24,12 +31,20 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <localInspection language="JAVA"
-      displayName="Lombok builder is missing non-null fields"
-      groupPath="Java"
-      groupBundle="messages.InspectionsBundle"
-      groupKey="group.names.probable.bugs"
-      enabledByDefault="true"
-      level="ERROR"
-      implementationClass="com.dguner.lombokbuilderhelper.LombokBuilderInspection"/>
+            displayName="Lombok builder has missing non-null fields"
+            groupPath="Java"
+            groupBundle="messages.InspectionsBundle"
+            groupKey="group.names.probable.bugs"
+            enabledByDefault="true"
+            level="ERROR"
+            implementationClass="com.nitrobox.lombokbuilderhelper.LombokBuilderInspection"/>
+    <localInspection language="JAVA"
+            displayName="Lombok builder has missing fields"
+            groupPath="Java"
+            groupBundle="messages.InspectionsBundle"
+            groupKey="group.names.probable.bugs"
+            enabledByDefault="true"
+            level="WEAK WARNING"
+            implementationClass="com.nitrobox.lombokbuilderhelper.LombokBuilderInspectionAll"/>
   </extensions>
 </idea-plugin>

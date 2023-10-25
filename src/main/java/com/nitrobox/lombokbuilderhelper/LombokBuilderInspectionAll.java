@@ -1,4 +1,4 @@
-package com.dguner.lombokbuilderhelper;
+package com.nitrobox.lombokbuilderhelper;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -39,13 +39,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 
-public class LombokBuilderInspection extends AbstractBaseJavaLocalInspectionTool {
-    public static final String QUICK_FIX_NAME = "Add all mandatory fields";
-    private static final Logger LOG =
-            Logger.getInstance("#com.dguner.lombokbuilderhelper.LombokBuilderInspection");
-    private final LbiQuickFix myQuickFix = new LbiQuickFix();
+public class LombokBuilderInspectionAll extends AbstractBaseJavaLocalInspectionTool {
 
-    private List<String> processMissingFields(PsiElement expression, List<String> mandatoryFields) {
+    public static final String QUICK_FIX_NAME = "Add missing fields";
+
+    private static final Logger LOG =
+            Logger.getInstance("#com.nitrobox.lombokbuilderhelper.LombokBuilderInspectionAll");
+    private final LbiAllQuickFix allQuickFix = new LbiAllQuickFix();
+
+    private List<String> processMissingFields(PsiElement expression, List<String> fields) {
         Queue<PsiElement> queue = new LinkedList<>();
         Set<PsiElement> seenElements = new HashSet<>();
         queue.offer(expression);
@@ -55,7 +57,7 @@ public class LombokBuilderInspection extends AbstractBaseJavaLocalInspectionTool
             if (cur != null) {
                 seenElements.add(cur);
                 if (cur instanceof PsiIdentifierImpl) {
-                    mandatoryFields.remove(cur.getText());
+                    fields.remove(cur.getText());
                 }
 
                 if (cur instanceof PsiMethodCallExpressionImpl) {
@@ -63,7 +65,8 @@ public class LombokBuilderInspection extends AbstractBaseJavaLocalInspectionTool
                     if (resolvedMethod != null) {
                         // If the resolved method is not a lombok method, add the return statement to the queue
                         // to visit its nodes too
-                        if (!Objects.equals(resolvedMethod.getClass().getName(),
+                        if (!Objects.equals(
+                                resolvedMethod.getClass().getName(),
                                 "de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder")) {
                             for (PsiReturnStatement returnStatement : PsiUtil.findReturnStatements(
                                     resolvedMethod)) {
@@ -72,7 +75,7 @@ public class LombokBuilderInspection extends AbstractBaseJavaLocalInspectionTool
                             // If we are calling build on an element that was a result of a toBuilder call we assume
                             // that the builder already has all mandatory fields set
                         } else if (Objects.equals(resolvedMethod.getName(), "toBuilder")) {
-                            mandatoryFields.clear();
+                            fields.clear();
                             break;
                         }
                     }
@@ -87,7 +90,8 @@ public class LombokBuilderInspection extends AbstractBaseJavaLocalInspectionTool
                             queue.offer(initializer);
                         }
 
-                        Arrays.stream(ReferencesSearch.search(resolvedElement,
+                        Arrays.stream(ReferencesSearch.search(
+                                resolvedElement,
                                 GlobalSearchScope.fileScope(resolvedElement.getContainingFile()),
                                 false).toArray(PsiReference.EMPTY_ARRAY)).forEach(reference -> {
                             if (reference.getElement().getTextRange().getStartOffset()
@@ -111,7 +115,7 @@ public class LombokBuilderInspection extends AbstractBaseJavaLocalInspectionTool
             }
         }
 
-        return mandatoryFields;
+        return fields;
     }
 
     private PsiClass getContainingBuilderClass(PsiMethod element) {
@@ -131,10 +135,7 @@ public class LombokBuilderInspection extends AbstractBaseJavaLocalInspectionTool
                         annotation.getQualifiedName()));
     }
 
-    private List<String> getMandatoryFields(PsiClass aClass) {
-        final Set<String> nonNullAnnotations =
-                Set.of("lombok.NonNull", "org.jetbrains.annotations.NotNull",
-                        "javax.validation.constraints.NotNull");
+    private List<String> getAllFields(PsiClass aClass) {
         final String defaultBuilderValueAnnotation = "lombok.Builder.Default";
         return Arrays.stream(aClass.getAllFields()).filter(field -> {
             final PsiAnnotation[] annotations = field.getAnnotations();
@@ -142,51 +143,59 @@ public class LombokBuilderInspection extends AbstractBaseJavaLocalInspectionTool
             final boolean isPrimitiveType = field.getType() instanceof PsiPrimitiveType;
             final boolean isStaticField =
                     modifiers != null && modifiers.hasModifierProperty(PsiModifier.STATIC);
-            return !isStaticField && (isPrimitiveType || Arrays.stream(annotations)
-                    .anyMatch(annotation -> nonNullAnnotations.contains(
-                            annotation.getQualifiedName()))) && Arrays.stream(annotations)
-                    .noneMatch(annotation -> Objects.equals(annotation.getQualifiedName(),
+            return !isStaticField && Arrays.stream(annotations)
+                    .noneMatch(annotation -> Objects.equals(
+                            annotation.getQualifiedName(),
                             defaultBuilderValueAnnotation));
         }).map(PsiField::getName).collect(Collectors.toList());
     }
 
     @NotNull
     @Override
-    public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
+    public PsiElementVisitor buildVisitor(
+            @NotNull
+            final ProblemsHolder holder,
             boolean isOnTheFly) {
         return new JavaElementVisitor() {
             private static final String DESCRIPTION_TEMPLATE =
-                    "Lombok builder is missing non nullable fields";
+                    "Lombok builder has missing fields";
 
             @Override
             public void visitMethodCallExpression(PsiMethodCallExpression expression) {
                 super.visitMethodCallExpression(expression);
                 PsiMethod resolvedMethod = expression.resolveMethod();
 
-                if (resolvedMethod != null && Objects.equals(resolvedMethod.getClass().getName(),
+                if (resolvedMethod != null && Objects.equals(
+                        resolvedMethod.getClass().getName(),
                         "de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder")
                         && Objects.equals(resolvedMethod.getName(), "build")) {
                     PsiClass builderClass = getContainingBuilderClass(resolvedMethod);
-                    if (builderClass != null && processMissingFields(expression,
-                            getMandatoryFields(builderClass)).size() > 0) {
-                        holder.registerProblem(expression, DESCRIPTION_TEMPLATE,
-                                ProblemHighlightType.GENERIC_ERROR, myQuickFix);
+                    if (builderClass != null) {
+                        List<String> missingMandatoryFields = processMissingFields(expression, getAllFields(builderClass));
+                        if (!missingMandatoryFields.isEmpty()) {
+                            holder.registerProblem(expression, DESCRIPTION_TEMPLATE,
+                                    ProblemHighlightType.WEAK_WARNING, allQuickFix);
+                        }
                     }
                 }
             }
         };
     }
 
-    private class LbiQuickFix implements LocalQuickFix {
+    private class LbiAllQuickFix implements LocalQuickFix {
+
         @Override
-        public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        public void applyFix(
+                @NotNull Project project,
+                @NotNull ProblemDescriptor descriptor) {
             PsiMethodCallExpression expression =
                     (PsiMethodCallExpression) descriptor.getPsiElement();
             PsiMethod resolvedMethod = expression.resolveMethod();
 
             if (resolvedMethod != null) {
-                List<String> missingFields = processMissingFields(expression,
-                        getMandatoryFields(getContainingBuilderClass(resolvedMethod)));
+                List<String> missingFields = processMissingFields(
+                        expression,
+                        getAllFields(getContainingBuilderClass(resolvedMethod)));
 
                 if (!missingFields.isEmpty()) {
                     String errorText = expression.getText();
@@ -195,8 +204,7 @@ public class LombokBuilderInspection extends AbstractBaseJavaLocalInspectionTool
                             JavaPsiFacade.getInstance(project).getElementFactory();
                     PsiMethodCallExpression fixedMethodExpression =
                             (PsiMethodCallExpression) factory.createExpressionFromText(
-                                    errorText.replace(".build()",
-                                            "." + String.join("().", missingFields) + "().build()"),
+                                    replaceLast(errorText, ".build()", "." + String.join("().", missingFields) + "().build()"),
                                     null);
 
                     expression.replace(fixedMethodExpression);
@@ -206,9 +214,21 @@ public class LombokBuilderInspection extends AbstractBaseJavaLocalInspectionTool
             }
         }
 
+        public static String replaceLast(String string, String toReplace, String replacement) {
+            int pos = string.lastIndexOf(toReplace);
+            if (pos > -1) {
+                return string.substring(0, pos)
+                        + replacement
+                        + string.substring(pos + toReplace.length());
+            } else {
+                return string;
+            }
+        }
+
         @NotNull
         public String getFamilyName() {
             return QUICK_FIX_NAME;
         }
     }
+
 }

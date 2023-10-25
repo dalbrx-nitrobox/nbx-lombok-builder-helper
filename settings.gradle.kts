@@ -1,1 +1,1 @@
-rootProject.name = "lombok-builder-helper"
+rootProject.name = "nbx-lombok-builder-helper"

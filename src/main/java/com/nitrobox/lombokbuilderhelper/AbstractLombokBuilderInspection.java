@@ -13,6 +13,7 @@ import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -23,7 +24,8 @@ import java.util.Set;
 
 public abstract class AbstractLombokBuilderInspection  extends AbstractBaseJavaLocalInspectionTool {
 
-    List<String> processMissingFields(PsiElement expression, List<String> fields) {
+    List<String> processMissingFields(PsiElement expression, List<String> originalFields) {
+        List<String> fields = new ArrayList<>(originalFields);
         Queue<PsiElement> queue = new LinkedList<>();
         Set<PsiElement> seenElements = new HashSet<>();
         queue.offer(expression);

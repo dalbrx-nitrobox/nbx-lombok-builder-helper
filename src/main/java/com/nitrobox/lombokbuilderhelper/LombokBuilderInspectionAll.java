@@ -18,9 +18,11 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Predicate;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 
 public class LombokBuilderInspectionAll extends AbstractLombokBuilderInspection {
@@ -33,21 +35,20 @@ public class LombokBuilderInspectionAll extends AbstractLombokBuilderInspection 
 
 
     private List<String> getAllFields(PsiClass aClass) {
-        final String defaultBuilderValueAnnotation = "lombok.Builder.Default";
-        return Arrays.stream(aClass.getAllFields()).filter(field -> {
-            final PsiAnnotation[] annotations = field.getAnnotations();
-            final PsiModifierList modifiers = field.getModifierList();
-            final boolean isStaticField =
-                    modifiers != null && modifiers.hasModifierProperty(PsiModifier.STATIC);
-            return !isStaticField && Arrays.stream(annotations)
-                    .noneMatch(annotation -> Objects.equals(
-                            annotation.getQualifiedName(),
-                            defaultBuilderValueAnnotation));
-        }).map(PsiField::getName).filter(equalsString("id").negate()).filter(equalsString("createdTimestamp").negate()).toList();
+        return Arrays.stream(aClass.getAllFields()).filter(this::filterField).map(PsiField::getName).toList();
     }
 
-    private Predicate<String> equalsString(String string) {
-        return string::equals;
+    private boolean filterField(PsiField field) {
+        final var skipAnnotations = Set.of("lombok.Builder.Default", "org.hibernate.annotations.CreationTimestamp",
+                "org.hibernate.annotations.UpdateTimestamp");
+        final var skipNames = Set.of("id", "createdTimestamp");
+
+        final var annotations = Arrays.stream(field.getAnnotations()).map(PsiAnnotation::getQualifiedName).collect(Collectors.toSet());
+        final PsiModifierList modifiers = field.getModifierList();
+        final boolean isStaticField =
+                modifiers != null && modifiers.hasModifierProperty(PsiModifier.STATIC);
+
+        return !isStaticField && Collections.disjoint(annotations, skipAnnotations) && !skipNames.contains(field.getName());
     }
 
     @NotNull

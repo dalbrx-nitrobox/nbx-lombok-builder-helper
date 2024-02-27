@@ -38,7 +38,7 @@
             groupKey="group.names.probable.bugs"
             enabledByDefault="true"
             level="ERROR"
-            implementationClass="com.nitrobox.lombokbuilderhelper.LombokBuilderInspection"/>
+            implementationClass="com.nitrobox.lombokbuilderhelper.LombokBuilderInspectionMandatory"/>
     <localInspection language="JAVA"
             displayName="Lombok builder has missing fields"
             groupPath="Java"

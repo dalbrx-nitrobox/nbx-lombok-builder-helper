@@ -21,11 +21,6 @@ public class LombokBuilderInspectionAll extends AbstractLombokBuilderInspection 
     }
 
     @Override
-    protected ProblemHighlightType problemHighlightType() {
-        return ProblemHighlightType.WEAK_WARNING;
-    }
-
-    @Override
     @NotNull
     public String getFamilyName() {
         return "Add missing fields";

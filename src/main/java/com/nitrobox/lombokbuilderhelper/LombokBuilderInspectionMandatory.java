@@ -18,11 +18,6 @@ public class LombokBuilderInspectionMandatory extends AbstractLombokBuilderInspe
     }
 
     @Override
-    protected ProblemHighlightType problemHighlightType() {
-        return ProblemHighlightType.GENERIC_ERROR;
-    }
-
-    @Override
     @NotNull
     public String getFamilyName() {
         return "Add all mandatory fields";

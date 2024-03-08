@@ -44,8 +44,6 @@ public abstract class AbstractLombokBuilderInspection extends AbstractBaseJavaLo
 
     protected abstract String descriptionTemplate();
 
-    protected abstract ProblemHighlightType problemHighlightType();
-
     protected Set<String> skipAnnotations() {
         return Set.of("lombok.Builder.Default", "org.hibernate.annotations.CreationTimestamp", "org.hibernate.annotations.UpdateTimestamp");
     }
@@ -91,7 +89,7 @@ public abstract class AbstractLombokBuilderInspection extends AbstractBaseJavaLo
                     if (builderClass != null) {
                         List<String> missingMandatoryFields = processMissingFields(expression, missingFields(builderClass));
                         if (!missingMandatoryFields.isEmpty()) {
-                            holder.registerProblem(expression, descriptionTemplate(), problemHighlightType(), quickFix);
+                            holder.registerProblem(expression, descriptionTemplate(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, quickFix);
                         }
                     }
                 }

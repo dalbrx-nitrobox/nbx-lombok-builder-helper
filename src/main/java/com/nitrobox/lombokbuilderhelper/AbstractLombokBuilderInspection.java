@@ -45,7 +45,11 @@ public abstract class AbstractLombokBuilderInspection extends AbstractBaseJavaLo
     protected abstract String descriptionTemplate();
 
     protected Set<String> skipAnnotations() {
-        return Set.of("lombok.Builder.Default", "org.hibernate.annotations.CreationTimestamp", "org.hibernate.annotations.UpdateTimestamp");
+        return Set.of(
+                "lombok.Builder.Default",
+                "org.hibernate.annotations.CreationTimestamp",
+                "org.hibernate.annotations.UpdateTimestamp",
+                "jakarta.persistence.GeneratedValue");
     }
     protected Set<String> skipNames() {
         return Set.of("id", "createdTimestamp");

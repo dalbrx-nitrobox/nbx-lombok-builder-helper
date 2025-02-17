@@ -1,34 +1,61 @@
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+
 plugins {
     id("java")
-    id("org.jetbrains.intellij") version "1.16.0"
+    id("org.jetbrains.intellij.platform") version "2.2.1"
 }
 
 group = "com.nitrobox.lombokbuilderhelper"
-version = "1.0.6"
+version = "1.1.0"
 
 repositories {
     mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
+
 }
 
 dependencies {
+    intellijPlatform {
+        bundledPlugin("com.intellij.java")
+        create(IntelliJPlatformType.IntellijIdeaUltimate, "2024.3.3")
+        testFramework(TestFrameworkType.Plugin.Java)
+    }
+
+
+    // Jakarta Validation
+    testImplementation("jakarta.validation:jakarta.validation-api:3.0.0")
+
+    // Lombok
+    testCompileOnly("org.projectlombok:lombok:1.18.24")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.24")
+
+    // Weitere benötigte Abhängigkeiten
+    testImplementation("org.hibernate.validator:hibernate-validator:6.2.0.Final")
+
     testImplementation("junit:junit:4.13.2")
 }
 
-intellij {
-    version.set("2023.2")
-    plugins.set(listOf("com.intellij.java"))
+intellijPlatform {
+    pluginConfiguration {
+        ideaVersion {
+            sinceBuild = "243"
+        }
+    }
 }
 
 tasks {
     // Set the JVM compatibility versions
     withType<JavaCompile> {
-        sourceCompatibility = "17"
-        targetCompatibility = "17"
+        sourceCompatibility = "21"
+        targetCompatibility = "21"
     }
 
-    patchPluginXml {
-        version.set("${project.version}")
-        sinceBuild.set("232")
-        untilBuild.set("")
-    }
+    //patchPluginXml {
+    //    version.set("${project.version}")
+    //    sinceBuild.set("232")
+    //    untilBuild.set("")
+    // }
 }

@@ -1,6 +1,5 @@
 package com.nitrobox.lombokbuilderhelper;
 
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiPrimitiveType;

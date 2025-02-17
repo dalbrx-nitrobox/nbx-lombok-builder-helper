@@ -13,14 +13,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4;
 import java.util.List;
-import org.assertj.core.api.Assertions;
-import org.assertj.core.api.ListAssert;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-public class LombokBuilderInspectionMandatoryTest extends LightJavaCodeInsightFixtureTestCase4 {
+public class LombokBuilderInspectionTest extends LightJavaCodeInsightFixtureTestCase4 {
 
-    public LombokBuilderInspectionMandatoryTest() {
+    public LombokBuilderInspectionTest() {
         super(new DefaultLightProjectDescriptor() {
             @Override
             public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
@@ -33,16 +31,36 @@ public class LombokBuilderInspectionMandatoryTest extends LightJavaCodeInsightFi
     }
 
     @Test
-    public void test() {
-        getFixture().enableInspections(List.of(LombokBuilderInspectionMandatory.class));
-
+    public void shouldWarnIfOptionalPropertyIsMissing() {
+        //given
+        getFixture().enableInspections(List.of(LombokBuilderInspectionAll.class));
         getFixture().configureByFile("pkg/LombokPojo.java");
-
         PsiFile file = getFixture().getFile();
         assertNotNull(file);
 
+        //when
         List<HighlightInfo> highlightInfos = getFixture().doHighlighting();
 
+        //then
+        assertThat(highlightInfos).satisfiesOnlyOnce(info -> {
+            assertThat(info.getInspectionToolId()) .isEqualTo("LombokBuilderInspectionAll");
+            assertThat(info.getSeverity()) .isEqualTo(HighlightSeverity.WEAK_WARNING);
+            assertThat(info.getDescription()) .isEqualTo("Lombok builder has missing fields");
+        });
+    }
+
+    @Test
+    public void shouldReportErrorIfMandatoryPropertyIsMissing() {
+        //given
+        getFixture().enableInspections(List.of(LombokBuilderInspectionMandatory.class));
+        getFixture().configureByFile("pkg/LombokPojoMandatory.java");
+        PsiFile file = getFixture().getFile();
+        assertNotNull(file);
+
+        //when
+        List<HighlightInfo> highlightInfos = getFixture().doHighlighting();
+
+        //then
         assertThat(highlightInfos).satisfiesOnlyOnce(info -> {
             assertThat(info.getInspectionToolId()) .isEqualTo("LombokBuilderInspectionMandatory");
             assertThat(info.getSeverity()) .isEqualTo(HighlightSeverity.ERROR);

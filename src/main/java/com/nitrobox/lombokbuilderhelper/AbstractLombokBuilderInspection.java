@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.jvm.annotation.JvmAnnotationConstantValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaElementVisitor;
@@ -35,12 +36,19 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractLombokBuilderInspection extends AbstractBaseJavaLocalInspectionTool implements LocalQuickFix {
+
+    private static final Logger LOG =
+            Logger.getInstance("com.nitrobox.lombokbuilderhelper.LombokBuilderInspectionAll");
+
+    public static final String PSI_LOMBOK_LIGHT_METHOD_BUILDER = "de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder";
+    public static final Set<String> LOMBOK_BUILDER_CLASS_QUALIFIED_NAMES = Set.of("lombok.Builder", "lombok.experimental.SuperBuilder");
 
     protected abstract String descriptionTemplate();
 
@@ -54,6 +62,7 @@ public abstract class AbstractLombokBuilderInspection extends AbstractBaseJavaLo
                 "org.springframework.data.annotation.LastModifiedDate",
                 "jakarta.persistence.GeneratedValue");
     }
+
     protected Set<String> skipNames() {
         return Set.of("id", "createdTimestamp");
     }
@@ -71,9 +80,6 @@ public abstract class AbstractLombokBuilderInspection extends AbstractBaseJavaLo
         return Arrays.stream(aClass.getAllFields()).filter(this::filterField).map(PsiField::getName).toList();
     }
 
-    private static final Logger LOG =
-            Logger.getInstance("#com.nitrobox.lombokbuilderhelper.LombokBuilderInspectionAll");
-
     @NotNull
     @Override
     public PsiElementVisitor buildVisitor(
@@ -87,21 +93,94 @@ public abstract class AbstractLombokBuilderInspection extends AbstractBaseJavaLo
             public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
                 super.visitMethodCallExpression(expression);
                 PsiMethod resolvedMethod = expression.resolveMethod();
+                if (resolvedMethod == null) {
+                    return;
+                }
 
-                if (resolvedMethod != null && Objects.equals(
-                        resolvedMethod.getClass().getName(),
-                        "de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder")
-                        && Objects.equals(resolvedMethod.getName(), "build")) {
+                if (isLombokBuilderBuildMethod(resolvedMethod) || isOpenAPIBuilderBuildMethod(resolvedMethod)) {
                     PsiClass builderClass = getContainingBuilderClass(resolvedMethod);
                     if (builderClass != null) {
                         List<String> missingMandatoryFields = processMissingFields(expression, missingFields(builderClass));
                         if (!missingMandatoryFields.isEmpty()) {
-                            holder.registerProblem(expression, descriptionTemplate(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, quickFix);
+                            holder.registerProblem(
+                                    expression,
+                                    descriptionTemplate(),
+                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                    quickFix);
                         }
                     }
                 }
             }
         };
+    }
+
+    private static PsiClass getContainingBuilderClass(PsiMethod resolvedMethod) {
+        if (isLombokBuilderBuildMethod(resolvedMethod)) {
+            return getContainingLombokBuilderClass(resolvedMethod);
+        }
+
+        if (isOpenAPIBuilderBuildMethod(resolvedMethod)) {
+            return Optional.ofNullable(resolvedMethod.getContainingClass())
+                    .flatMap(containingClass -> Optional.ofNullable(containingClass.getContainingClass()))
+                    .orElse(null);
+        }
+
+        return null;
+    }
+
+    private static boolean isLombokBuilderBuildMethod(PsiMethod resolvedMethod) {
+        if (isNotBuildMethod(resolvedMethod)) {
+            return false;
+        }
+
+        return Objects.equals(
+                resolvedMethod.getClass().getName(),
+                PSI_LOMBOK_LIGHT_METHOD_BUILDER);
+    }
+
+    private static PsiClass getContainingLombokBuilderClass(PsiMethod element) {
+        PsiClass aClass = element.getContainingClass();
+        while (aClass != null && !isClassBuilder(aClass)) {
+            aClass = aClass.getContainingClass();
+        }
+
+        return aClass;
+    }
+
+    private static boolean isClassBuilder(PsiClass aClass) {
+        return Arrays.stream(aClass.getAnnotations())
+                .anyMatch(annotation -> LOMBOK_BUILDER_CLASS_QUALIFIED_NAMES.contains(
+                        annotation.getQualifiedName()));
+    }
+
+    private static boolean isOpenAPIBuilderBuildMethod(PsiMethod resolvedMethod) {
+        if (isNotBuildMethod(resolvedMethod)) {
+            return false;
+        }
+
+        return Optional.ofNullable(resolvedMethod.getContainingClass())
+                .flatMap(containingClass -> Optional.ofNullable(containingClass.getContainingClass()))
+                .flatMap(parentClass -> Optional.ofNullable(parentClass.getAnnotation("jakarta.annotation.Generated")))
+                .map(annotation -> AbstractLombokBuilderInspection.isGeneratedByOpenApiToolsSpringCodeGen(
+                        annotation,
+                        "org.openapitools.codegen.languages.SpringCodegen"))
+                .orElse(false);
+    }
+
+    private static boolean isNotBuildMethod(PsiMethod resolvedMethod) {
+        return resolvedMethod == null || !Objects.equals(resolvedMethod.getName(), "build");
+    }
+
+    private static boolean isGeneratedByOpenApiToolsSpringCodeGen(PsiAnnotation annotation, Object constantValue) {
+        return annotation.getAttributes()
+                .stream()
+                .map(attribute -> Optional.ofNullable(attribute.getAttributeValue())
+                        .filter(JvmAnnotationConstantValue.class::isInstance)
+                        .map(JvmAnnotationConstantValue.class::cast)
+                        .map(JvmAnnotationConstantValue::getConstantValue)
+                        .map(Object::toString)
+                        .orElse(""))
+                .anyMatch(constantValue::equals);
     }
 
     List<String> processMissingFields(PsiElement expression, List<String> originalFields) {
@@ -125,7 +204,7 @@ public abstract class AbstractLombokBuilderInspection extends AbstractBaseJavaLo
                         // to visit its nodes too
                         if (!Objects.equals(
                                 resolvedMethod.getClass().getName(),
-                                "de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder")) {
+                                PSI_LOMBOK_LIGHT_METHOD_BUILDER)) {
                             for (PsiReturnStatement returnStatement : PsiUtil.findReturnStatements(
                                     resolvedMethod)) {
                                 queue.offer(returnStatement.getReturnValue());
@@ -173,23 +252,6 @@ public abstract class AbstractLombokBuilderInspection extends AbstractBaseJavaLo
         }
 
         return fields;
-    }
-
-    PsiClass getContainingBuilderClass(PsiMethod element) {
-        PsiClass aClass = element.getContainingClass();
-        while (aClass != null && !isClassBuilder(aClass)) {
-            aClass = aClass.getContainingClass();
-        }
-
-        return aClass;
-    }
-
-    boolean isClassBuilder(PsiClass aClass) {
-        final Set<String> builderClassQualifiedNames =
-                Set.of("lombok.Builder", "lombok.experimental.SuperBuilder");
-        return Arrays.stream(aClass.getAnnotations())
-                .anyMatch(annotation -> builderClassQualifiedNames.contains(
-                        annotation.getQualifiedName()));
     }
 
     @Override

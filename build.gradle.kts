@@ -25,8 +25,12 @@ dependencies {
     }
 
 
-    // Jakarta Validation
     testImplementation("jakarta.validation:jakarta.validation-api:3.0.0")
+    testImplementation("com.fasterxml.jackson.core:jackson-annotations:2.18.2")
+    testImplementation("jakarta.annotation:jakarta.annotation-api:2.1.1")
+    testImplementation("io.swagger.core.v3:swagger-annotations:2.2.28")
+
+
 
     // Lombok
     testCompileOnly("org.projectlombok:lombok:1.18.24")

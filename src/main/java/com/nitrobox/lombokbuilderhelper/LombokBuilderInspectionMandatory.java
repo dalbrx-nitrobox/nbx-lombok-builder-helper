@@ -29,7 +29,8 @@ public class LombokBuilderInspectionMandatory extends AbstractLombokBuilderInspe
         final var nonNullAnnotations =
                 Set.of("lombok.NonNull", "org.jetbrains.annotations.NotNull",
                         "javax.validation.constraints.NotNull",
-                        "jakarta.validation.constraints.NotNull");
+                        "jakarta.validation.constraints.NotNull",
+                        "jakarta.validation.constraints.NotBlank");
         final var annotations = Arrays.stream(field.getAnnotations()).map(PsiAnnotation::getQualifiedName).collect(Collectors.toSet());
         final var isNonNull = !Collections.disjoint(nonNullAnnotations, annotations);
 

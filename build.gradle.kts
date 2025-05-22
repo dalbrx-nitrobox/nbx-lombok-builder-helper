@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.nitrobox.lombokbuilderhelper"
-version = "1.2.0"
+version = "1.3.0"
 
 repositories {
     mavenCentral()
@@ -20,7 +20,7 @@ repositories {
 dependencies {
     intellijPlatform {
         bundledPlugin("com.intellij.java")
-        create(IntelliJPlatformType.IntellijIdeaUltimate, "2024.3.3")
+        create(IntelliJPlatformType.IntellijIdeaUltimate, "2025.1.1")
         testFramework(TestFrameworkType.Plugin.Java)
     }
 

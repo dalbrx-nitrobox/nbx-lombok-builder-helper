@@ -17,10 +17,8 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-@Disabled("Not working anymore after upgrade to intellij 2025")
 class OpenApiGeneratorBuilderInspectionTest extends LightJavaCodeInsightFixtureTestCase5 {
 
     public OpenApiGeneratorBuilderInspectionTest() {

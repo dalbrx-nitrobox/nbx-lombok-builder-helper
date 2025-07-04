@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.nitrobox.lombokbuilderhelper"
-version = "1.3.0"
+version = "1.3.1"
 
 repositories {
     mavenCentral()
@@ -19,12 +19,12 @@ repositories {
 
 dependencies {
     intellijPlatform {
-        bundledPlugin("com.intellij.java")
+        bundledPlugin("com.intellij.java")// Fügt Lombok-Plugin hinzu
         create(IntelliJPlatformType.IntellijIdeaUltimate, "2025.1.3")
-        testFramework(TestFrameworkType.Platform)  // Änderung hier
-        testFramework(TestFrameworkType.Plugin.Java)  // und hier
+        testFramework(TestFrameworkType.Platform)
+        testFramework(TestFrameworkType.Plugin.Java)
+        bundledPlugin("Lombook Plugin")
     }
-
 
     testImplementation("jakarta.validation:jakarta.validation-api:3.0.0")
     testImplementation("com.fasterxml.jackson.core:jackson-annotations:2.18.2")

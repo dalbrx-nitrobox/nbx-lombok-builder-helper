@@ -32,6 +32,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <localInspection language="JAVA"
+            shortName="LombokBuilderInspectionMandatory"
             displayName="Lombok builder has missing non-null fields"
             groupPath="Java"
             groupBundle="messages.InspectionsBundle"
@@ -40,6 +41,7 @@
             level="ERROR"
             implementationClass="com.nitrobox.lombokbuilderhelper.LombokBuilderInspectionMandatory"/>
     <localInspection language="JAVA"
+            shortName="LombokBuilderInspectionAll"
             displayName="Lombok builder has missing fields"
             groupPath="Java"
             groupBundle="messages.InspectionsBundle"

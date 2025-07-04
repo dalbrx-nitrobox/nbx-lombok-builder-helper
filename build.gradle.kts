@@ -3,11 +3,11 @@ import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
     id("java")
-    id("org.jetbrains.intellij.platform") version "2.2.1"
+    id("org.jetbrains.intellij.platform") version "2.6.0"
 }
 
 group = "com.nitrobox.lombokbuilderhelper"
-version = "1.2.0"
+version = "1.3.0"
 
 repositories {
     mavenCentral()
@@ -20,8 +20,9 @@ repositories {
 dependencies {
     intellijPlatform {
         bundledPlugin("com.intellij.java")
-        create(IntelliJPlatformType.IntellijIdeaUltimate, "2024.3.3")
-        testFramework(TestFrameworkType.Plugin.Java)
+        create(IntelliJPlatformType.IntellijIdeaUltimate, "2025.1.3")
+        testFramework(TestFrameworkType.Platform)  // Änderung hier
+        testFramework(TestFrameworkType.Plugin.Java)  // und hier
     }
 
 
@@ -39,13 +40,26 @@ dependencies {
     // Weitere benötigte Abhängigkeiten
     testImplementation("org.hibernate.validator:hibernate-validator:6.2.0.Final")
 
-    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    //workaround see https://youtrack.jetbrains.com/issue/IJPL-159134/JUnit5-Test-Framework-refers-to-JUnit4-java.lang.NoClassDefFoundError-junit-framework-TestCase
+    testRuntimeOnly("junit:junit:4.13.2")
+
+    testImplementation("org.assertj:assertj-core:3.24.2")
 }
+
+tasks.test {
+    useJUnitPlatform()
+
+    dependsOn("buildPlugin")
+}
+
 
 intellijPlatform {
     pluginConfiguration {
         ideaVersion {
-            sinceBuild = "243"
+            sinceBuild = "251"
         }
     }
 }

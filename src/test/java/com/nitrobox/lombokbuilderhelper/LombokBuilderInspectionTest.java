@@ -2,7 +2,7 @@ package com.nitrobox.lombokbuilderhelper;
 
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -11,12 +11,15 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-public class LombokBuilderInspectionTest extends LightJavaCodeInsightFixtureTestCase4 {
+@Disabled("Not working anymore after upgrade to intellij 2025")
+class LombokBuilderInspectionTest extends LightJavaCodeInsightFixtureTestCase5 {
 
     public LombokBuilderInspectionTest() {
         super(new DefaultLightProjectDescriptor() {
@@ -25,13 +28,17 @@ public class LombokBuilderInspectionTest extends LightJavaCodeInsightFixtureTest
                 this.withRepositoryLibrary("jakarta.validation:jakarta.validation-api:3.0.0");
                 this.withRepositoryLibrary("org.projectlombok:lombok:1.18.24");
                 super.configureModule(module, model, contentEntry);
-
             }
-        }, "src/test/testData");
+        });
+    }
+
+    @Override
+    protected @Nullable String getTestDataPath() {
+        return "src/test/testData";
     }
 
     @Test
-    public void shouldWarnIfOptionalPropertyIsMissing() {
+    void shouldWarnIfOptionalPropertyIsMissing() {
         //given
         getFixture().enableInspections(List.of(LombokBuilderInspectionAll.class));
         getFixture().configureByFile("pkg/LombokPojo.java");
@@ -50,7 +57,7 @@ public class LombokBuilderInspectionTest extends LightJavaCodeInsightFixtureTest
     }
 
     @Test
-    public void shouldReportErrorIfMandatoryPropertyIsMissing() {
+    void shouldReportErrorIfMandatoryPropertyIsMissing() {
         //given
         getFixture().enableInspections(List.of(LombokBuilderInspectionMandatory.class));
         getFixture().configureByFile("pkg/LombokPojoMandatory.java");

@@ -26,7 +26,7 @@ class OpenApiGeneratorBuilderInspectionTest extends LightJavaCodeInsightFixtureT
             @Override
             public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
                 this.withRepositoryLibrary("jakarta.validation:jakarta.validation-api:3.0.0");
-                this.withRepositoryLibrary("com.fasterxml.jackson.core:jackson-annotations:2.18.2");
+                this.withRepositoryLibrary("com.fasterxml.jackson.core:jackson-annotations:2.22");
                 this.withRepositoryLibrary("jakarta.annotation:jakarta.annotation-api:2.1.1");
                 this.withRepositoryLibrary("io.swagger.core.v3:swagger-annotations:2.2.28");
                 super.configureModule(module, model, contentEntry);

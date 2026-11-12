@@ -7,9 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5;
 import java.util.List;
@@ -24,8 +26,13 @@ class LombokBuilderInspectionTest extends LightJavaCodeInsightFixtureTestCase5 {
             @Override
             public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
                 this.withRepositoryLibrary("jakarta.validation:jakarta.validation-api:3.0.0");
-                this.withRepositoryLibrary("org.projectlombok:lombok:1.18.24");
+                this.withRepositoryLibrary("org.projectlombok:lombok:1.18.48");
                 super.configureModule(module, model, contentEntry);
+            }
+
+            @Override
+            public Sdk getSdk() {
+                return IdeaTestUtil.getMockJdk21();
             }
         });
     }

@@ -17,10 +17,6 @@ public class CouponRequestId {
   @jakarta.validation.constraints.NotBlank
   private String requestId;
 
-  public void build() {
-        CouponRequestId.builder().build();
-  }
-
   public CouponRequestId() {
     super();
   }
@@ -145,4 +141,10 @@ public class CouponRequestId {
       CouponRequestId.Builder builder = new CouponRequestId.Builder();
       return builder.copyOf(this);
     }
+}
+
+class CouponRequestIdUsage {
+  public void build() {
+    CouponRequestId.builder().build();
+  }
 }

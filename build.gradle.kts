@@ -1,13 +1,12 @@
-import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
     id("java")
-    id("org.jetbrains.intellij.platform") version "2.6.0"
+    id("org.jetbrains.intellij.platform") version "2.20.1"
 }
 
 group = "com.nitrobox.lombokbuilderhelper"
-version = "1.3.1"
+version = "1.4.0"
 
 repositories {
     mavenCentral()
@@ -20,31 +19,27 @@ repositories {
 dependencies {
     intellijPlatform {
         bundledPlugin("com.intellij.java")// Fügt Lombok-Plugin hinzu
-        create(IntelliJPlatformType.IntellijIdeaUltimate, "2025.1.3")
+        intellijIdea("2026.3")
         testFramework(TestFrameworkType.Platform)
         testFramework(TestFrameworkType.Plugin.Java)
         bundledPlugin("Lombook Plugin")
     }
 
     testImplementation("jakarta.validation:jakarta.validation-api:3.0.0")
-    testImplementation("com.fasterxml.jackson.core:jackson-annotations:2.18.2")
+    testImplementation("com.fasterxml.jackson.core:jackson-annotations:2.22")
     testImplementation("jakarta.annotation:jakarta.annotation-api:2.1.1")
     testImplementation("io.swagger.core.v3:swagger-annotations:2.2.28")
 
 
 
     // Lombok
-    testCompileOnly("org.projectlombok:lombok:1.18.24")
-    testAnnotationProcessor("org.projectlombok:lombok:1.18.24")
+    testCompileOnly("org.projectlombok:lombok:1.18.48")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.48")
 
     // Weitere benötigte Abhängigkeiten
     testImplementation("org.hibernate.validator:hibernate-validator:6.2.0.Final")
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    //workaround see https://youtrack.jetbrains.com/issue/IJPL-159134/JUnit5-Test-Framework-refers-to-JUnit4-java.lang.NoClassDefFoundError-junit-framework-TestCase
-    testRuntimeOnly("junit:junit:4.13.2")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
 
     testImplementation("org.assertj:assertj-core:3.24.2")
 }
@@ -53,23 +48,28 @@ tasks.test {
     useJUnitPlatform()
 
     dependsOn("buildPlugin")
+
+    // JDK 25 starts a Wayland AWT thread when WAYLAND_DISPLAY is set, and the
+    // platform test runner treats that thread as a leak.
+    setEnvironment(System.getenv().filterKeys { it != "WAYLAND_DISPLAY" })
 }
 
 
 intellijPlatform {
     pluginConfiguration {
         ideaVersion {
-            sinceBuild = "251"
+            sinceBuild = "263"
         }
     }
 }
 
-tasks {
-    // Set the JVM compatibility versions
-    withType<JavaCompile> {
-        sourceCompatibility = "21"
-        targetCompatibility = "21"
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
+}
+
+tasks {
 
     //patchPluginXml {
     //    version.set("${project.version}")
